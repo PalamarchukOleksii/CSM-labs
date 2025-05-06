@@ -35,16 +35,16 @@ def compute_pair_product(combo, pair_table):
     return result
 
 
-def compute_table3_scores(combos, table3):
+def compute_scores(combos, table):
     results = []
-    alt_cols = list(table3.columns)
+    alt_cols = list(table.columns)
     for combo in combos:
         row = list(combo)
         for alt in alt_cols:
             try:
                 product_res = 1.0
                 for alt_key in combo:
-                    value = float(table3.at[alt_key, alt])
+                    value = float(table.at[alt_key, alt])
                     product_res *= value + 1
                 row.append(product_res)
             except (KeyError, ValueError, TypeError) as e:
@@ -109,12 +109,12 @@ def calculate_alternative_probabilities(results, output_path):
     print(f"Saved alternative probabilities to {output_path}")
 
 
-def process_table3_data(df_combinations, table_data, output_path):
+def process_data(df_combinations, table_data, output_path):
     combo_cols = [f"Group{i}" for i in range(1, 8)]
     combos_only = df_combinations[combo_cols].values.tolist()
     pc_norm_values = df_combinations["PC-Norm"].tolist()
 
-    scored_combos, alt_columns = compute_table3_scores(combos_only, table_data)
+    scored_combos, alt_columns = compute_scores(combos_only, table_data)
 
     result_df = pd.DataFrame()
 
@@ -199,10 +199,18 @@ def normalize_and_weight_columns(extended_path, probabilities_output_path, prefi
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.abspath(__file__))
     DATA_DIR = "data"
-    table1_path = os.path.join(base_dir, DATA_DIR, "table1.csv")
-    table2_path = os.path.join(base_dir, DATA_DIR, "table2.csv")
-    table3_path = os.path.join(base_dir, DATA_DIR, "table3.csv")
-    table4_path = os.path.join(base_dir, DATA_DIR, "table4.csv")
+    starting_alternatives_path = os.path.join(
+        base_dir, DATA_DIR, "starting_alternatives.csv"
+    )
+    interrelationship_matrix_path = os.path.join(
+        base_dir, DATA_DIR, "interrelationship_matrix.csv"
+    )
+    connection_matrix_8_path = os.path.join(
+        base_dir, DATA_DIR, "connection_matrix_8.csv"
+    )
+    connection_matrix_9_path = os.path.join(
+        base_dir, DATA_DIR, "connection_matrix_9.csv"
+    )
 
     OUTPUT_DIR = "result"
     output_dir_path = os.path.join(base_dir, OUTPUT_DIR)
@@ -211,16 +219,16 @@ if __name__ == "__main__":
     alt_prob_path = os.path.join(
         output_dir_path, "alternative_probabilities_1_to_7.csv"
     )
-    extended_path_table3 = os.path.join(
-        output_dir_path, "extended_combinations_table3.csv"
+    extended_path_connection_matrix_8 = os.path.join(
+        output_dir_path, "extended_combinations_8.csv"
     )
-    extended_path_table4 = os.path.join(
-        output_dir_path, "extended_combinations_table4.csv"
+    extended_path_connection_matrix_9 = os.path.join(
+        output_dir_path, "extended_combinations_9.csv"
     )
-    probabilities_output_path_table3 = os.path.join(
+    probabilities_output_path_connection_matrix_8 = os.path.join(
         output_dir_path, "alternative_probabilities_8.csv"
     )
-    probabilities_output_path_table4 = os.path.join(
+    probabilities_output_path_connection_matrix_9 = os.path.join(
         output_dir_path, "alternative_probabilities_9.csv"
     )
 
@@ -234,10 +242,10 @@ if __name__ == "__main__":
         7: [1, 2, 3],
     }
 
-    probabilities_dict = read_probabilities(table1_path)
-    pair_table_values = read_pair_values(table2_path)
-    table3_data = read_pair_values(table3_path)
-    table4_data = read_pair_values(table4_path)
+    probabilities_dict = read_probabilities(starting_alternatives_path)
+    pair_table_values = read_pair_values(interrelationship_matrix_path)
+    connection_matrix_8_data = read_pair_values(connection_matrix_8_path)
+    connection_matrix_9_data = read_pair_values(connection_matrix_9_path)
 
     pc_combinations_results = calculate_pc_combinations(
         alternative_groups, probabilities_dict, pair_table_values
@@ -248,14 +256,22 @@ if __name__ == "__main__":
     calculate_alternative_probabilities(pc_combinations_results, alt_prob_path)
 
     combinations_df = pd.read_csv(comb_pc_path)
-    process_table3_data(combinations_df, table3_data, extended_path_table3)
-
-    normalize_and_weight_columns(
-        extended_path_table3, probabilities_output_path_table3, "8."
+    process_data(
+        combinations_df, connection_matrix_8_data, extended_path_connection_matrix_8
     )
 
-    process_table3_data(combinations_df, table4_data, extended_path_table4)
+    normalize_and_weight_columns(
+        extended_path_connection_matrix_8,
+        probabilities_output_path_connection_matrix_8,
+        "8.",
+    )
+
+    process_data(
+        combinations_df, connection_matrix_9_data, extended_path_connection_matrix_9
+    )
 
     normalize_and_weight_columns(
-        extended_path_table4, probabilities_output_path_table4, "9."
+        extended_path_connection_matrix_9,
+        probabilities_output_path_connection_matrix_9,
+        "9.",
     )
